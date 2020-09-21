@@ -4,6 +4,8 @@ from fdfs_client.client import Fdfs_client
 from django.conf import settings
 
 
+# 存储类必须是 deconstructible，以便在迁移中的字段上使用它时可以序列化。
+# 只要你的字段有自己的参数可以自动序列化，你可以使用django.utils.deconstruct.deconstructible类装饰器
 @deconstructible
 class FastDFSStorage(Storage):
     """自定义的文件存储系统"""
@@ -44,7 +46,7 @@ class FastDFSStorage(Storage):
 
     def url(self, name):
         """
-        在获取ImageFIled字段数据的url属性时，django会调用url方法获取文件的完整路径
+        在获取 ImageFiled 字段数据的 url 属性时，django 会调用 url 方法获取文件的完整路径
         :param name: 从数据库中读出的字段值 也就是之前保存的file_name  Remote file_id
         :return:
         """

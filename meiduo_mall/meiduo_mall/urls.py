@@ -24,7 +24,7 @@ urlpatterns = [
     path('', include('users.urls')),
     path(r'oauth/', include('oauth.urls')),
     path(r'', include('areas.urls')),
-    path(r'^ckeditor/', include('ckeditor_uploader.urls')),
+    path(r'ckeditor/', include('ckeditor_uploader.urls')),
     path(r'', include('goods.urls')),
     path(r'', include('carts.urls')),
     path(r'', include('orders.urls')),
@@ -32,8 +32,3 @@ urlpatterns = [
 ]
 
 
-# yum install python-devel
-# yum install libevent-devel
-# pip install cffi
-# pip install cryptography
-# build-essential    libssl-dev     libffi-dev     python-dev

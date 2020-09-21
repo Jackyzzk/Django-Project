@@ -20,24 +20,40 @@ from goods.models import SKU
 from goods.serializers import SKUSerializer
 from carts.utils import merge_cart_cookie_to_redis
 
-# Create your views here.
 
-
+# View -> APIView
+# View: Only implements dispatch-by-method and simple sanity checking.
+# View 是 Django 默认的视图基类，APIView 是 REST framework 提供的所有视图的基类
+# View 内部提供了 as_view 方法和 dispatch 方法
+# APIView 多了一些属性和方法，比如：身份认证、权限检查、流量控制
+# authentication_classes 身份认证
+# permission_classes 权限检查
+# throttle_classes 流量控制
+# 1、传入到视图方法中的是 REST framework的Request对象，而不是 Django 的 HttpRequest 对象；
+# 2、视图方法可以返回 REST framework 的 Response 对象，视图会为响应数据设置（render）符合前端要求的格式；
+# 3、任何 APIException 异常都会被捕获到，并且处理成合适的响应信息；
+# 4、在进行 dispatch() 分发前，会对请求进行身份认证、权限检查、流量控制。
 class UsernameCountView(APIView):
     """
     用户名数量
     """
+    # 在业务代码中只需要实现三个功能即可实现get方法
+    # ORM调用
+    # 序列化
+    # 返回数据
     def get(self, request, username):
         """
         获取指定用户名数量
         """
+        # filter(): Return a new QuerySet instance
+        # count(): Perform a COUNT() query using the current filter constraints.
         count = User.objects.filter(username=username).count()
 
         data = {
             'username': username,
             'count': count
         }
-
+        # HttpResponseBase -> HttpResponse -> SimpleTemplateResponse -> Response
         return Response(data)
 
 
@@ -59,6 +75,7 @@ class MobileCountView(APIView):
         return Response(data)
 
 
+# mixins.CreateModelMixin, GenericAPIView -> CreateAPIView
 class UserView(CreateAPIView):
     """
     用户注册
@@ -67,15 +84,6 @@ class UserView(CreateAPIView):
 
 
 class SMSCodeTokenView(GenericAPIView):
-    # GenericAPIView的两个属性：
-    # queryset: 指明视图需要的数据，针对从数据库中获取数据。如果是从前端获取数据就就从 request 中获取。
-    # serializer_class: 指明视图使用哪个序列化器
-    # 如果你用了上面的属性，就必须需要使用对应的 get_queryset 和 get_serializer 进行操作
-    # get_queryset功能：从类属性 queryset 中获取 model 的 queryset 数据
-    # get_serializer功能：从类属性 serializer_class 中获得 serializer 的序列化类，主要是给 Mixin 扩展类使用
-    # CreateModelMixin（增加）,DestroyModelMixin（删除）,ListModelMixin（查询,查queryset）
-    # RetrieveModelMixin（查询，查对象，针对于存在"pk"）,UpdateModelMixin（修改）
-
     """获取发送短信验证码的凭据"""
     serializer_class = CheckImageCodeSerialzier
 
@@ -85,8 +93,8 @@ class SMSCodeTokenView(GenericAPIView):
         # 定义了 serializer_class 属性的指向后，便可以提供 get_serializer 方法
         # get_serializer(self, args, *kwargs)
         # 返回序列化器对象，主要用来提供给Mixin扩展类使用
-        # 该方法在提供序列化器对象的时候，会向序列化器对象的context属性补充三个数据：
-        # request、format、view，这三个数据对象可以在定义序列化器时使用。
+
+        # 如果我们在视图中想要获取序列化器对象，用来校验数据
         serializer = self.get_serializer(data=request.query_params)
         # request,当前视图的请求对象;view,当前请求的类视图对象;format,当前请求期望返回的数据格式
         # 判断用户是否在60s内使用同一个手机号码获取短信
@@ -106,6 +114,7 @@ class SMSCodeTokenView(GenericAPIView):
         access_token = user.generate_send_sms_code_token()
 
         # 正则表达式实现隐藏手机号部分片段
+        # sub是 substitute表示替换
         mobile = re.sub(r'(\d{3})\d{4}(\d{4})', r'\1****\2', user.mobile)
 
         return Response({
@@ -224,7 +233,7 @@ class AddressViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, GenericVi
         """
         用户地址列表数据
         """
-        queryset = self.get_queryset()
+        queryset = self.get_queryset()  # 调用刚刚重写的 get_queryset 方法
         serializer = serializers.UserAddressSerializer(queryset, many=True)
         user = self.request.user
         return Response({
@@ -249,6 +258,9 @@ class AddressViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, GenericVi
         """
         处理删除
         """
+        # self.get_object() -> queryset = self.filter_queryset(self.get_queryset()) ->
+        # -> obj = get_object_or_404(queryset, **filter_kwargs)
+        # 所以 obj 拿到的是 is_deleted=False 再加上别的一些参数
         address = self.get_object()
 
         # 进行逻辑删除

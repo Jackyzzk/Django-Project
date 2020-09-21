@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mysql -h10.211.55.5 -uroot -pmysql meiduo_27 < ./goods_data.sql
+mysql -h127.0.0.1 -uroot -proot pycharm < ./goods_data.sql

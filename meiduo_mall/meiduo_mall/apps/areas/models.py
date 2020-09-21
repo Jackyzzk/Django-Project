@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Area(models.Model):
+    # Model 继承自 ModelBase
     """
     行政区划
     """
